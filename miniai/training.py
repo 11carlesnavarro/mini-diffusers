@@ -1,6 +1,6 @@
 import torch.nn.functional as F
 
-__all__  = ['accuracy', 'Dataset', 'fit', 'get_dls']
+__all__  = ['accuracy', 'fit']
 
 import pickle,gzip,math,os,time,shutil,torch, matplotlib as mpl,numpy as np,matplotlib.pyplot as plt
 from pathlib import Path
@@ -14,14 +14,6 @@ def accuracy(out, yb):
 
 def report(loss, preds, yb):
     print(f'loss: {loss:.2f}, accuracy: {accuracy(preds, yb):.2f}')
-
-class Dataset():
-    def __init__(self, x, y):
-        self.x,self.y = x,y
-    def __len__(self):
-        return len(self.x)
-    def __getitem__(self, i):
-        return self.x[i],self.y[i]
 
 def fit(epochs, model, loss_func, opt, train_dl, val_dl):
     for epoch in range(epochs):
@@ -43,9 +35,3 @@ def fit(epochs, model, loss_func, opt, train_dl, val_dl):
                 count += 1
         print(epoch, tot_loss/count, tot_acc/count)
     return tot_loss/count, tot_acc/count
-
-def get_dls(train_ds, val_ds, bs, **kwargs):
-    return (
-        DataLoader(train_ds, batch_size=bs, shuffle=True, **kwargs),
-        DataLoader(val_ds, batch_size=bs*2, **kwargs)
-    )

@@ -5,7 +5,7 @@ __all__ = ['CancelFitException', 'CancelBatchException', 'CancelEpochException',
 
 import math, torch, matplotlib.pyplot as plt
 import fastcore.all as fc
-from collections.abc import Any, Mapping
+from collections.abc import Mapping
 from operator import attrgetter
 from functools import partial
 from copy import copy
@@ -24,21 +24,23 @@ class CancelFitException(Exception): pass
 class CancelBatchException(Exception): pass
 class CancelEpochException(Exception): pass
 
-class Callback():
-    order = 0
-    _fwd = 'model', 'opt', 'batch', 'epoch'
-    def __getattr__(self, name):
-        if name in self._fwd:
-            return getattr(self.learn, name)
-        raise AttributeError(name)
-    def __setattr__(self, name, val):
-        if name in self._fwd:
-            warn(f'Setting {name} in callback. Did you mean to set `self.learn.{name}`?')
-        super().__setattr__(name, val)
-    @property
-    def training(self):
-        return self.model.training
-    
+#class Callback():
+#    order = 0
+#    _fwd = 'model', 'opt', 'batch', 'epoch'
+#    def __getattr__(self, name):
+#        if name in self._fwd:
+#            return getattr(self.learn, name)
+#        raise AttributeError(name)
+#    def __setattr__(self, name, val):
+#        if name in self._fwd:
+#            warn(f'Setting {name} in callback. Did you mean to set `self.learn.{name}`?')
+#        super().__setattr__(name, val)
+#    @property
+#    def training(self):
+#        return self.model.training
+
+class Callback(): order = 0
+
 def run_cbs(cbs, method_nm, learn=None):
     for cb in sorted(cbs, key=attrgetter('order')):
         method = getattr(cb, method_nm, None)
@@ -166,7 +168,7 @@ class Learner():
     def __init__(self, model, dls=(0,), loss_func=F.mse_loss, lr=0.1, cbs=None, opt_func=optim.SGD):
         cbs = fc.L(cbs)
         fc.store_attr()
-    
+
     @with_cbs('batch')
     def _one_batch(self):
         self.predict()
@@ -245,7 +247,6 @@ class MomentumLearner(TrainLearner):
         with torch.no_grad():
             for p in self.model.parameters():
                 p.grad.mul_(self.mom)
-    
 
 class LRFinderCB(Callback):
     def __init__(self, gamma=1.3, max_mult=3):
@@ -259,7 +260,7 @@ class LRFinderCB(Callback):
     def after_batch(self, learn):
         if not learn.training:
             raise CancelEpochException()
-        self.lrs.append(self.opt.param_groups[0]['lr'])
+        self.lrs.append(learn.opt.param_groups[0]['lr'])
         loss = to_cpu(learn.loss)
         self.losses.append(loss)
         if loss < self.min:

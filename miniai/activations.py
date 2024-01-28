@@ -4,8 +4,8 @@ import random, math, torch, numpy as np, matplotlib.pyplot as plt
 import fastcore.all as fc
 from functools import partial
 
-from .datasets import *
-from .learner import *
+from miniai.datasets import *
+from miniai.learner import *
 
 __all__ = ['set_seed', 'Hook', 'Hooks', 'HooksCallback', 'append_stats', 'get_hist', 'get_min', 'ActivationStats']
 
@@ -56,9 +56,9 @@ class HooksCallback(Callback):
     def __iter__(self): return iter(self.hooks)
     def __len__(self): return len(self.hooks)
 
-def append_stats(hook, mod, inp, outp):
+def append_stats(hook, mod, inp, outp, *args):
     if not hasattr(hook, 'stats'): 
-        hook.stats = ([], [])
+        hook.stats = ([], [], [])
     acts = to_cpu(outp)
     hook.stats[0].append(acts.mean())
     hook.stats[1].append(acts.std())
