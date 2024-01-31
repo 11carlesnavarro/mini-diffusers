@@ -3,3 +3,4 @@ miniai.egg-info/
 test.py
 __pycache__/
 .ipynb_checkpoints
+.*
