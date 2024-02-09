@@ -1,6 +1,8 @@
 import torch
 from typing import Mapping
 from torch.utils.data import default_collate
+import random
+import numpy as np
 
 def_device = 'mps' if torch.backends.mps.is_available() else 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -23,3 +25,9 @@ def to_cpu(x):
 
 def collate_device(b): 
     return to_device(default_collate(b))
+
+def set_seed(seed, deterministic=False):
+    torch.use_deterministic_algorithms(deterministic)
+    torch.manual_seed(seed)
+    random.seed(seed)
+    np.random.seed(seed)

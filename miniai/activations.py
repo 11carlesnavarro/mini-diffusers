@@ -6,32 +6,38 @@ from functools import partial
 
 from miniai.datasets import *
 from miniai.learner import *
+from miniai.plotting import show_image, get_grid
 
-__all__ = ['set_seed', 'Hook', 'Hooks', 'HooksCallback', 'append_stats', 'get_hist', 'get_min', 'ActivationStats']
+__all__ = ['Hook', 'Hooks', 'HooksCallback', 'append_stats', 'get_hist', 'get_min', 'ActivationStats']
 
-def set_seed(seed, deterministic=False):
-    torch.use_deterministic_algorithms(deterministic)
-    torch.manual_seed(seed)
-    random.seed(seed)
-    np.random.seed(seed)
 
 class Hook():
     def __init__(self, m, f):
         self.hook = m.register_forward_hook(partial(f, self))
+
     def remove(self):
         self.hook.remove()
+
     def __del__(self):
         self.remove()
 
 class Hooks(list):
     def __init__(self, ms, f):
         super().__init__([Hook(m, f) for m in ms])
-    def __enter__(self, *args): return self
-    def __exit__(self, *args): self.remove()
-    def __del__(self): self.remove()
+
+    def __enter__(self, *args): 
+        return self
+    
+    def __exit__(self, *args):
+        self.remove()
+
+    def __del__(self): 
+        self.remove()
+
     def __delitem__(self, i):
         self[i].remove()
         super().__delitem__(i)
+
     def remove(self):
         for h in self: h.remove()
     
@@ -53,8 +59,12 @@ class HooksCallback(Callback):
     
     def after_fit(self, learn):
         self.hooks.remove()
-    def __iter__(self): return iter(self.hooks)
-    def __len__(self): return len(self.hooks)
+
+    def __iter__(self): 
+        return iter(self.hooks)
+    
+    def __len__(self): 
+        return len(self.hooks)
 
 def append_stats(hook, mod, inp, outp, *args):
     if not hasattr(hook, 'stats'): 
