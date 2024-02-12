@@ -19,9 +19,9 @@ def inplace(f):
         return b
     return _f
     
-#@inplace
-#def transformi(b):
-#    b[x] = [torch.flatten(TF.to_tensor(o)) for o in b[x]]
+@inplace
+def transformi(b):
+    b[x] = [torch.flatten(TF.to_tensor(o)) for o in b[x]]
 
 def collate_dict(ds):
     get = itemgetter(*ds.features)

@@ -6,52 +6,50 @@ from functools import partial
 
 from miniai.datasets import *
 from miniai.learner import *
+from miniai.utils import to_cpu
 from miniai.plotting import show_image, get_grid
 
 __all__ = ['Hook', 'Hooks', 'HooksCallback', 'append_stats', 'get_hist', 'get_min', 'ActivationStats']
 
 
 class Hook():
-    def __init__(self, m, f):
+    def __init__(self, m, f): 
         self.hook = m.register_forward_hook(partial(f, self))
-
-    def remove(self):
+    def remove(self): 
         self.hook.remove()
-
-    def __del__(self):
-        self.remove()
-
-class Hooks(list):
-    def __init__(self, ms, f):
-        super().__init__([Hook(m, f) for m in ms])
-
-    def __enter__(self, *args): 
-        return self
-    
-    def __exit__(self, *args):
-        self.remove()
-
     def __del__(self): 
         self.remove()
 
+class Hooks(list):
+    def __init__(self, ms, f): 
+        super().__init__([Hook(m, f) for m in ms])
+    def __enter__(self, *args): 
+        return self
+    def __exit__ (self, *args): 
+        self.remove()
+    def __del__(self): 
+        self.remove()
     def __delitem__(self, i):
         self[i].remove()
         super().__delitem__(i)
-
     def remove(self):
         for h in self: h.remove()
     
 class HooksCallback(Callback):
     def __init__(self, hookfunc, mod_filter=fc.noop, on_train=True, on_valid=False, mods=None):
-        fc.store_attr()
+        self.hookfunc = hookfunc
+        self.mod_filter = mod_filter
+        self.on_train = on_train
+        self.on_valid = on_valid
+        self.mods = mods       
         super().__init__()
-    
+
     def before_fit(self, learn):
         if self.mods:
             mods = self.mods
         else:
             mods = fc.filter_ex(learn.model.modules(), self.mod_filter)
-        self.hooks = Hooks(mods, partial(self.hookfunc, learn))
+        self.hooks = Hooks(mods, partial(self._hookfunc, learn))
 
     def _hookfunc(self, learn, *args, **kwargs):
         if (self.on_train and learn.training) or (self.on_valid and not learn.training):
@@ -66,13 +64,13 @@ class HooksCallback(Callback):
     def __len__(self): 
         return len(self.hooks)
 
-def append_stats(hook, mod, inp, outp, *args):
-    if not hasattr(hook, 'stats'): 
-        hook.stats = ([], [], [])
+def append_stats(hook, mod, inp, outp):
+    if not hasattr(hook,'stats'): 
+        hook.stats = ([],[],[])
     acts = to_cpu(outp)
     hook.stats[0].append(acts.mean())
     hook.stats[1].append(acts.std())
-    hook.stats[2].append(acts.abs().histc(40, 0, 10))
+    hook.stats[2].append(acts.abs().histc(40,0,10))
 
 def get_hist(h):
     return torch.stack(h.stats[2]).t().float().log1p()

@@ -1,8 +1,9 @@
 import fastcore.all as fc
 import math,numpy as np, matplotlib.pyplot as plt
 from itertools import zip_longest
+import torch
 
-__all__ = ['show_image', 'subplots', 'get_grid', 'show_images']
+__all__ = ['show_image', 'subplots', 'get_grid', 'show_images', 'plot_func']
 
 @fc.delegates(plt.Axes.imshow)
 def show_image(im, ax=None, figsize=None, title=None, noframe=True, **kwargs):
@@ -85,3 +86,10 @@ def show_images(
     axs = get_grid(len(ims), nrows, ncols, **kwargs)[1].flat
     for im, t, ax in zip_longest(ims, titles or [], axs):
         show_image(im, ax=ax, title=t)
+
+def plot_func(f, start=-5., end=5., steps=100):
+    x = torch.linspace(start, end, steps)
+    plt.plot(x, f(x))
+    plt.grid(True, which='both', ls='--')
+    plt.axhline(y=0, color='k', linewidth=0.7)
+    plt.axvline(x=0, color='k', linewidth=0.7)
