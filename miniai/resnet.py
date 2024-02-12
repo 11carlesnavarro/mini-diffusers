@@ -19,7 +19,7 @@ class ResBlock(nn.Module):
     def __init__(self, ni, nf, stride=1, act=act_gr, norm=None):
         super().__init__()
         self.convs = _conv_block(ni, nf, stride, act=act, norm=norm)
-        self.idconv = fc.noop if ni==nf else conv(ni, nf, ks=1, stride=1, act=None)
+        self.idconv = fc.noop if ni==nf else conv(ni, nf, ks=1, stride=1, act=NoneB)
         self.pool = fc.noop if stride==1 else nn.AvgPool2d(2, ceil_mode=True)
         self.act = act()
 
