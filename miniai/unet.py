@@ -132,10 +132,9 @@ class EmbUNetModel(nn.Module):
         super().__init__()
         self.conv_in = nn.Conv2d(in_channels, nfs[0], kernel_size=3, padding=1)
         self.n_temb = nf = nfs[0]
-        n_emb = nf * 4
-        self.emb_mlp = nn.Sequential(
-            lin(self.n_temb, n_emb, norm=nn.BatchNorm1d),
-            lin(n_emb, n_emb))
+        n_emb = nf*4
+        self.emb_mlp = nn.Sequential(lin(self.n_temb, n_emb, norm=nn.BatchNorm1d),
+                                     lin(n_emb, n_emb))
         self.downs = nn.ModuleList()
         n = len(nfs)
         for i in range(n):
