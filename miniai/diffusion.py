@@ -21,9 +21,8 @@ def noisify(x0):
 def collate_ddpm(b):
     return noisify(default_collate(b)['image']) # weird
 
-def dl_ddpm(ds):
-    return DataLoader(ds, collate_fn=collate_ddpm, num_workers=0, pin_memory=False)
-
+def dl_ddpm(ds, bs=1, num_workers=4): 
+    return DataLoader(ds, batch_size=bs, collate_fn=collate_ddpm, num_workers=num_workers)
 
 def ddim_step(x_t, noise, alpha_bar_t, alpha_bar_t1, beta_bar_t, beta_bar_t1, eta, sig, clamp=True):
     sig = ((beta_bar_t1 / beta_bar_t).sqrt() * (1 - alpha_bar_t/alpha_bar_t1).sqrt()) * eta

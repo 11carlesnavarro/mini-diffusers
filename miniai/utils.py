@@ -64,4 +64,4 @@ def clean_mem():
     clean_tb()
     clean_ipython_hist()
     gc.collect()
-    torch.cuda_empty_cache()
+    torch.cuda.empty_cache()
