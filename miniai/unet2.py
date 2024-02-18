@@ -160,6 +160,7 @@ class TimestepEmbedSequential(nn.Sequential, TimestepBlock):
                 x = layer(x, emb)
             else:
                 x = layer(x)
+        return x
 
 class ResBlock(TimestepBlock):
     """
@@ -216,7 +217,7 @@ class ResBlock(TimestepBlock):
             self.h_upd = self.x_upd = nn.Identity()
         
         self.emb_layers = nn.Sequential(
-            nn.SilU(),
+            nn.SiLU(),
             linear(emb_channels, 
                    2 * self.out_channels if use_scale_shift_norm else self.out_channels),
         )
@@ -245,6 +246,7 @@ class ResBlock(TimestepBlock):
         :param emb: an [N x emb_channels] Tensor.
         :return: an [N x C x ...] Tensor.
         """
+
         if self.updown:
             in_rest, in_conv = self.in_layers[:-1], self.in_layers[-1]
             h = in_rest(x)
@@ -299,7 +301,7 @@ class QKVAttention(nn.Module):
         a = torch.einsum("bts,bcs->bct", weight, v.reshape(bs * self.n_heads, ch, -1))
         return a.reshape(bs, -1, length)
 
-class AttentionBlock(TimestepBlock):
+class AttentionBlock(nn.Module):
     """
     An attention block that allows spatial positions to attend to each other.
     """
@@ -447,6 +449,7 @@ class UNetModel(nn.Module):
             [TimestepEmbedSequential(
                 conv_nd(dims, in_channels, ch, 3, padding=1))]
         )
+
         self._feature_size = ch
         input_block_chans = [ch]
         ds = 1
@@ -579,7 +582,7 @@ class UNetModel(nn.Module):
             zero_module(conv_nd(dims, ch, out_channels, 3, padding=1)),
         )
     
-    def forward(self, x, timesteps, y=None):
+    def forward(self, inp): #x, timesteps, y=None):
         """
         Apply the model to an input batch.
 
@@ -588,13 +591,18 @@ class UNetModel(nn.Module):
         :param y: an [N] Tensor of labels, if class-conditional.
         :return: an [N x C x ...] Tensor of outputs.
         """
+
+        if len(inp) == 2:
+            x, timesteps = inp
+            y = None
+        else:
+            x, timesteps, y = inp
         assert (y is not None) == (
             self.num_classes is not None
         ), "must provide y if and only if model is class-conditional"
         
         hs = []
         emb = self.time_embed(timestep_embedding(timesteps, self.model_channels))
-
         if self.num_classes is not None:
             assert y.shape == (x.shape[0],)
             emb = emb + self.label_emb(y)
@@ -610,3 +618,17 @@ class UNetModel(nn.Module):
         h = h.type(x.dtype)
         return self.out(h)
                 
+if __name__ == "__main__":
+    model2 = UNetModel(image_size=(32,32),
+                   in_channels=1,
+                   model_channels=32,
+                   out_channels=1,
+                   num_res_blocks=2,
+                   attention_resolutions=()
+                  )
+
+    image = torch.rand(1, 1, 32, 32)
+    print(image)
+    timesteps = torch.tensor([1])
+
+    print(model2((image, timesteps)))
